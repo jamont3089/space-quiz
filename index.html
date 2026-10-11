@@ -98,6 +98,7 @@
     .review-result.incorrect { color: var(--red); }
     .review-fact { color: var(--muted); }
     .restart { width: 100%; font-size: 14px; padding: 13px; }
+    .restart + .restart { margin-top: 10px; }
     @keyframes drift { 50% { transform: translateY(-5px) rotate(-5deg); } }
     @keyframes twinkle { to { opacity: .35; } }
     @keyframes correct-pop { 50% { transform: scale(1.025); } }
@@ -184,11 +185,12 @@
         <div id="review-list"></div>
       </section>
       <button class="next restart" id="restart">Explore again <span class="arrow" aria-hidden="true">↻</span></button>
+      <button class="next restart" id="restart-shuffled">Replay with shuffled questions <span class="arrow" aria-hidden="true">↻</span></button>
     </section>
     <footer>Made for curious minds. <span>Keep looking up.</span></footer>
   </main>
   <script>
-    const questions = [
+    const questionBank = [
       { category: "The first explorers", question: "Who was the first human to travel into space?", answers: ["Neil Armstrong", "Yuri Gagarin", "Buzz Aldrin", "John Glenn"], correct: 1, fact: "Yuri Gagarin orbited Earth aboard Vostok 1 on April 12, 1961. His flight lasted 108 minutes." },
       { category: "One giant leap", question: "Which Apollo mission first landed humans on the Moon?", answers: ["Apollo 8", "Apollo 13", "Apollo 11", "Apollo 17"], correct: 2, fact: "Apollo 11 landed on July 20, 1969. Neil Armstrong and Buzz Aldrin explored the surface while Michael Collins orbited above." },
       { category: "Our cosmic neighborhood", question: "Which planet is known as the Red Planet?", answers: ["Venus", "Jupiter", "Mercury", "Mars"], correct: 3, fact: "Iron minerals in Mars's soil oxidize, giving the planet its distinctive rusty-red color." },
@@ -200,6 +202,7 @@
       { category: "Trailblazers", question: "Who was the first woman in space?", answers: ["Sally Ride", "Mae Jemison", "Valentina Tereshkova", "Peggy Whitson"], correct: 2, fact: "Valentina Tereshkova launched aboard Vostok 6 in June 1963 and completed 48 orbits of Earth." },
       { category: "The next chapter", question: "What is the name of NASA's program to return humans to the Moon?", answers: ["Gemini", "Artemis", "Mercury", "Discovery"], correct: 1, fact: "Artemis aims to return humans to the Moon and build experience for future crewed missions to Mars." }
     ];
+    let questions = questionBank;
     const $ = (id) => document.getElementById(id);
     let current = 0;
     let score = 0;
@@ -207,6 +210,24 @@
     let bestStreak = 0;
     let answered = false;
     const answerHistory = [];
+    function shuffle(items) {
+      const shuffled = items.slice();
+      for (let index = shuffled.length - 1; index > 0; index--) {
+        const other = Math.floor(Math.random() * (index + 1));
+        [shuffled[index], shuffled[other]] = [shuffled[other], shuffled[index]];
+      }
+      return shuffled;
+    }
+    function shuffledQuestions() {
+      return shuffle(questionBank).map((item) => {
+        const answers = shuffle(item.answers.map((answer, index) => ({ answer, index })));
+        return {
+          ...item,
+          answers: answers.map(({ answer }) => answer),
+          correct: answers.findIndex(({ index }) => index === item.correct)
+        };
+      });
+    }
     function updateProgress(completed) {
       document.querySelector(".progress-fill").style.width = `${completed / questions.length * 100}%`;
       document.querySelector(".progress").setAttribute("aria-valuenow", completed);
@@ -324,7 +345,8 @@
       if (current === questions.length - 1) showResults();
       else { current++; renderQuestion(true); }
     });
-    $("restart").addEventListener("click", () => {
+    function startQuiz(shuffled = false) {
+      questions = shuffled ? shuffledQuestions() : questionBank;
       current = 0;
       score = 0;
       currentStreak = 0;
@@ -338,7 +360,9 @@
       $("quiz").hidden = false;
       updateProgress(0);
       renderQuestion(true);
-    });
+    }
+    $("restart").addEventListener("click", () => startQuiz());
+    $("restart-shuffled").addEventListener("click", () => startQuiz(true));
     renderQuestion();
   </script>
 </body>
