@@ -12,6 +12,12 @@ On Windows, from the project directory:
 Start-Process .\index.html
 ```
 
+## Live site
+
+The quiz is deployed to GitHub Pages at https://jamont3089.github.io/space-quiz/.
+
+Every push to `main` runs [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml), which publishes `index.html`. The workflow can also be run manually from the Actions tab.
+
 ## Features
 
 - Ten multiple-choice questions with explanations and one attempt per question.
