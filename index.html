@@ -84,6 +84,16 @@
     .result-stats strong { display: block; font-size: 20px; }
     .result-stats div + div { border-left: 1px solid var(--line); }
     .result-stats small { color: var(--muted); font-size: 11px; }
+    .review-toggle { width: 100%; margin-bottom: 12px; }
+    .answer-review { margin: 0 0 20px; padding: 18px; border: 1px solid var(--line); border-radius: 10px; text-align: left; }
+    .answer-review h3 { margin: 0 0 14px; font-size: 16px; }
+    .review-item { padding: 14px 0; border-top: 1px solid var(--line); }
+    .review-item h4 { margin: 0 0 8px; font-size: 14px; line-height: 1.5; }
+    .review-item p { max-width: none; margin: 5px 0 0; font-size: 12px; overflow-wrap: anywhere; }
+    .review-result { font-weight: 650; }
+    .review-result.correct { color: var(--green); }
+    .review-result.incorrect { color: var(--red); }
+    .review-fact { color: var(--muted); }
     .restart { width: 100%; font-size: 14px; padding: 13px; }
     @keyframes drift { 50% { transform: translateY(-5px) rotate(-5deg); } }
     @keyframes twinkle { to { opacity: .35; } }
@@ -164,6 +174,11 @@
       <div class="final-score" id="final-score"></div>
       <p>questions answered correctly</p>
       <div class="result-stats"><div><strong id="accuracy"></strong><small>Accuracy</small></div><div><strong id="rank"></strong><small>Explorer rank</small></div></div>
+      <button class="next review-toggle" id="review-toggle" type="button" aria-expanded="false" aria-controls="answer-review">Review your answers</button>
+      <section class="answer-review" id="answer-review" aria-labelledby="review-title" hidden>
+        <h3 id="review-title">Answer review</h3>
+        <div id="review-list"></div>
+      </section>
       <button class="next restart" id="restart">Explore again <span class="arrow" aria-hidden="true">↻</span></button>
     </section>
     <footer>Made for curious minds. <span>Keep looking up.</span></footer>
@@ -185,6 +200,7 @@
     let current = 0;
     let score = 0;
     let answered = false;
+    const answerHistory = [];
     function updateProgress(completed) {
       document.querySelector(".progress-fill").style.width = `${completed / questions.length * 100}%`;
       document.querySelector(".progress").setAttribute("aria-valuenow", completed);
@@ -223,6 +239,7 @@
     function selectAnswer(selected) {
       if (answered) return;
       answered = true;
+      answerHistory[current] = selected;
       const item = questions[current];
       const correct = selected === item.correct;
       if (correct) score++;
@@ -249,6 +266,7 @@
     function showResults() {
       $("quiz").hidden = true;
       $("results").hidden = false;
+      renderAnswerReview();
       $("question-number").textContent = "Mission complete";
       const tier = score >= 8 ? ["🚀", "You're out of this world!", "Your cosmic knowledge is stellar. The universe has a lot to offer, and you're ready to explore it.", "Commander"]
         : score >= 5 ? ["🧑‍🚀", "A promising space explorer!", "You've got a solid launchpad. Keep your curiosity alive — there's always more out there to discover.", "Astronaut"]
@@ -261,6 +279,34 @@
       $("accuracy").textContent = `${score * 10}%`;
       $("result-title").focus();
     }
+    function renderAnswerReview() {
+      const list = $("review-list");
+      list.replaceChildren();
+      questions.forEach((item, index) => {
+        const selected = answerHistory[index];
+        const correct = selected === item.correct;
+        const entry = document.createElement("article");
+        entry.className = "review-item";
+        const question = document.createElement("h4");
+        question.textContent = `${index + 1}. ${item.question}`;
+        const result = document.createElement("p");
+        result.className = `review-result ${correct ? "correct" : "incorrect"}`;
+        result.textContent = `${correct ? "✓ Correct" : "× Incorrect"} — Your answer: ${item.answers[selected]}`;
+        const correctAnswer = document.createElement("p");
+        correctAnswer.textContent = `Correct answer: ${item.answers[item.correct]}`;
+        const fact = document.createElement("p");
+        fact.className = "review-fact";
+        fact.textContent = item.fact;
+        entry.append(question, result, correctAnswer, fact);
+        list.append(entry);
+      });
+    }
+    $("review-toggle").addEventListener("click", () => {
+      const opening = $("answer-review").hidden;
+      $("answer-review").hidden = !opening;
+      $("review-toggle").setAttribute("aria-expanded", String(opening));
+      $("review-toggle").textContent = opening ? "Hide answer review" : "Review your answers";
+    });
     $("next").addEventListener("click", () => {
       if (!answered) return;
       if (current === questions.length - 1) showResults();
@@ -269,6 +315,10 @@
     $("restart").addEventListener("click", () => {
       current = 0;
       score = 0;
+      answerHistory.length = 0;
+      $("answer-review").hidden = true;
+      $("review-toggle").setAttribute("aria-expanded", "false");
+      $("review-toggle").textContent = "Review your answers";
       $("results").hidden = true;
       $("quiz").hidden = false;
       updateProgress(0);
