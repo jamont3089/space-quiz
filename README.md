@@ -18,7 +18,7 @@ Start-Process .\index.html
 - Live score and a ten-segment progress bar.
 - Green animated feedback for correct answers and a red shake for incorrect answers.
 - Results with accuracy, an emoji reaction, and an explorer rank.
-- Replay to start a fresh quiz.
+- Replay to start a fresh quiz in the original order or shuffle both questions and answers.
 - A narrow, responsive layout with system light/dark themes.
 - Native buttons, focus management, accessible progress descriptions, and reduced-motion support.
 - Inline SVG artwork and a subtle hex-grid mission-control panel.
