@@ -80,10 +80,13 @@
     .results p { color: var(--muted); font-size: 14px; max-width: 360px; margin: 0 auto; }
     .final-score { font-size: 58px; font-weight: 750; line-height: 1.2; letter-spacing: -3px; margin: 24px 0 3px; color: var(--accent); }
     .final-score span { color: var(--muted); font-size: 24px; font-weight: 450; letter-spacing: -1px; }
-    .result-stats { display: grid; grid-template-columns: 1fr 1fr; background: var(--soft); border-radius: 10px; margin: 25px 0; padding: 16px; }
+    .result-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--soft); border-radius: 10px; margin: 25px 0; padding: 16px; }
     .result-stats strong { display: block; font-size: 20px; }
     .result-stats div + div { border-left: 1px solid var(--line); }
     .result-stats small { color: var(--muted); font-size: 11px; }
+    .result-stats div { min-width: 0; padding: 0 8px; }
+    .result-stats div:first-child { padding-left: 0; }
+    .result-stats div:last-child { padding-right: 0; }
     .restart { width: 100%; font-size: 14px; padding: 13px; }
     @keyframes drift { 50% { transform: translateY(-5px) rotate(-5deg); } }
     @keyframes twinkle { to { opacity: .35; } }
@@ -143,6 +146,7 @@
       <div class="status">
         <div><strong id="question-number">Question 01</strong><span class="total"> / 10</span></div>
         <div class="score"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m10 2 2.4 4.9 5.4.8-3.9 3.8.9 5.4L10 14.3l-4.8 2.6.9-5.4L2.2 7.7l5.4-.8L10 2Z" stroke="currentColor" stroke-width="1.4"/></svg><strong id="score">0</strong><span class="total">points</span></div>
+        <div class="streak">Current streak: <strong id="current-streak">0</strong></div>
       </div>
       <div class="progress" role="progressbar" aria-label="Questions answered" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0" aria-valuetext="0 of 10 questions answered"><div class="progress-fill"></div></div>
     </section>
@@ -163,7 +167,7 @@
       <p id="result-message"></p>
       <div class="final-score" id="final-score"></div>
       <p>questions answered correctly</p>
-      <div class="result-stats"><div><strong id="accuracy"></strong><small>Accuracy</small></div><div><strong id="rank"></strong><small>Explorer rank</small></div></div>
+      <div class="result-stats"><div><strong id="accuracy"></strong><small>Accuracy</small></div><div><strong id="rank"></strong><small>Explorer rank</small></div><div><strong id="best-streak"></strong><small>Best streak</small></div></div>
       <button class="next restart" id="restart">Explore again <span class="arrow" aria-hidden="true">↻</span></button>
     </section>
     <footer>Made for curious minds. <span>Keep looking up.</span></footer>
@@ -184,6 +188,8 @@
     const $ = (id) => document.getElementById(id);
     let current = 0;
     let score = 0;
+    let currentStreak = 0;
+    let bestStreak = 0;
     let answered = false;
     function updateProgress(completed) {
       document.querySelector(".progress-fill").style.width = `${completed / questions.length * 100}%`;
@@ -225,7 +231,12 @@
       answered = true;
       const item = questions[current];
       const correct = selected === item.correct;
-      if (correct) score++;
+      if (correct) {
+        score++;
+        currentStreak++;
+        bestStreak = Math.max(bestStreak, currentStreak);
+      } else currentStreak = 0;
+      $("current-streak").textContent = currentStreak;
       Array.from($("answers").children).forEach((button, index) => {
         button.disabled = true;
         if (index === item.correct || index === selected) {
@@ -259,6 +270,7 @@
       $("rank").textContent = tier[3];
       $("final-score").innerHTML = `${score}<span> / ${questions.length}</span>`;
       $("accuracy").textContent = `${score * 10}%`;
+      $("best-streak").textContent = bestStreak;
       $("result-title").focus();
     }
     $("next").addEventListener("click", () => {
@@ -269,6 +281,9 @@
     $("restart").addEventListener("click", () => {
       current = 0;
       score = 0;
+      currentStreak = 0;
+      bestStreak = 0;
+      $("current-streak").textContent = currentStreak;
       $("results").hidden = true;
       $("quiz").hidden = false;
       updateProgress(0);
